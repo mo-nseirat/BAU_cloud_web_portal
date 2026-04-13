@@ -110,15 +110,21 @@ def login():
     if not _is_active(uid):
         return jsonify({'error': 'Your account is disabled. Contact the IT team.'}), 403
 
-    # Store minimal info in server-side session cookie
-    session['uid']      = user['uid']
-    session['name']     = user['name']
-    session['role']     = user['role']
-    session['vlan']     = user['vlan']
-    session['dept']     = user['dept']
-    session['initials'] = user['initials']
+    # Fix 3: check first-login flag
+    db  = get_db()
+    row = db.execute('SELECT must_change_password FROM user_settings WHERE uid=?', (uid,)).fetchone()
+    db.close()
+    must_change = row['must_change_password'] if row else 0   # admins created manually default to 0
 
-    return jsonify({'user': user})
+    session['uid']               = user['uid']
+    session['name']              = user['name']
+    session['role']              = user['role']
+    session['vlan']              = user['vlan']
+    session['dept']              = user['dept']
+    session['initials']          = user['initials']
+    session['must_change_password'] = bool(must_change)
+
+    return jsonify({'user': user, 'must_change_password': bool(must_change)})
 
 
 @app.route('/api/logout', methods=['POST'])
@@ -132,13 +138,46 @@ def me():
     if 'uid' not in session:
         return jsonify({'error': 'Not logged in'}), 401
     return jsonify({
-        'uid':      session['uid'],
-        'name':     session['name'],
-        'role':     session['role'],
-        'vlan':     session['vlan'],
-        'dept':     session['dept'],
-        'initials': session['initials'],
+        'uid':                  session['uid'],
+        'name':                 session['name'],
+        'role':                 session['role'],
+        'vlan':                 session['vlan'],
+        'dept':                 session['dept'],
+        'initials':             session['initials'],
+        'must_change_password': session.get('must_change_password', False),
     })
+
+
+@app.route('/api/change-password', methods=['POST'])
+@login_required
+def change_password():
+    """
+    Called from the forced password-change screen.
+    Validates the new password, updates LDAP, clears the flag.
+    """
+    data         = request.get_json(silent=True) or {}
+    new_password = data.get('new_password', '').strip()
+    confirm      = data.get('confirm_password', '').strip()
+
+    if not new_password or len(new_password) < 8:
+        return jsonify({'error': 'Password must be at least 8 characters'}), 400
+    if new_password != confirm:
+        return jsonify({'error': 'Passwords do not match'}), 400
+
+    uid = session['uid']
+    ok  = ldap_h.set_password(uid, new_password)
+    if not ok:
+        return jsonify({'error': 'Failed to update password. Contact IT.'}), 500
+
+    # Clear the flag in SQLite and in the current session
+    db = get_db()
+    db.execute(
+        'UPDATE user_settings SET must_change_password=0 WHERE uid=?', (uid,)
+    )
+    db.commit()
+    db.close()
+    session['must_change_password'] = False
+    return jsonify({'ok': True})
 
 
 # ═══════════════════════════════════════════════════════════
@@ -240,17 +279,17 @@ def approve_request(req_id):
     if req['status'] != 'pending':
         return jsonify({'error': f'Request is already {req["status"]}'}), 409
 
-    # Get owner's VLAN and department from LDAP
     owner = ldap_h.get_user(req['owner_uid'])
     if not owner:
         return jsonify({'error': 'Owner account not found in LDAP'}), 404
 
-    # Provision on Proxmox
-    vmid, err = pve.provision_vm(req, req['owner_uid'], owner['vlan'], owner['dept'])
+    # Fix 2: provision_vm now returns (vmid, credentials, error)
+    vmid, credentials, err = pve.provision_vm(
+        req, req['owner_uid'], owner['vlan'], owner['dept']
+    )
     if err:
         return jsonify({'error': f'Proxmox provisioning failed: {err}'}), 500
 
-    # Update request record
     db = get_db()
     db.execute(
         '''UPDATE requests
@@ -261,7 +300,7 @@ def approve_request(req_id):
     )
     db.commit()
     db.close()
-    return jsonify({'ok': True, 'vmid': vmid})
+    return jsonify({'ok': True, 'vmid': vmid, 'credentials': credentials})
 
 
 @app.route('/api/requests/<req_id>/reject', methods=['PUT'])
@@ -325,10 +364,10 @@ def create_user():
     if not ok:
         return jsonify({'error': 'Username already exists or LDAP error'}), 409
 
-    # Ensure active flag is set in SQLite
+    # Ensure active flag and first-login password-change flag are set
     db = get_db()
     db.execute(
-        'INSERT OR REPLACE INTO user_settings (uid, active) VALUES (?,1)',
+        'INSERT OR REPLACE INTO user_settings (uid, active, must_change_password) VALUES (?,1,1)',
         (data['uid'],),
     )
     db.commit()

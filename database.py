@@ -9,6 +9,7 @@ def get_db():
 
 def init_db():
     conn = get_db()
+    # Main schema (idempotent)
     conn.executescript('''
 
         -- VM provisioning requests submitted by Drs
@@ -30,7 +31,6 @@ def init_db():
         );
 
         -- VMs that have been provisioned on Proxmox
-        -- Owner / VLAN metadata is stored here; live status is fetched from Proxmox
         CREATE TABLE IF NOT EXISTS vms (
             proxmox_vmid  INTEGER PRIMARY KEY,
             name          TEXT    NOT NULL,
@@ -43,19 +43,38 @@ def init_db():
             disk_gb       INTEGER DEFAULT 20,
             ip_address    TEXT    DEFAULT 'Assigning...',
             status        TEXT    DEFAULT 'building',
+            -- VM login credentials set via Cloud-Init at provisioning time
+            vm_username   TEXT    DEFAULT '',
+            vm_password   TEXT    DEFAULT '',
+            conn_type     TEXT    DEFAULT 'ssh',   -- 'ssh' | 'rdp'
             created_at    DATETIME DEFAULT (datetime('now'))
         );
 
-        -- Per-user settings (active/disabled) kept in SQLite
-        -- because OpenLDAP enable/disable requires ppolicy overlay;
-        -- this is simpler and fully controlled by IT Admin in the portal.
+        -- Per-user settings managed by IT Admin
         CREATE TABLE IF NOT EXISTS user_settings (
-            uid        TEXT    PRIMARY KEY,
-            active     INTEGER DEFAULT 1,
-            created_at DATETIME DEFAULT (datetime('now'))
+            uid                  TEXT    PRIMARY KEY,
+            active               INTEGER DEFAULT 1,
+            must_change_password INTEGER DEFAULT 1,
+            created_at           DATETIME DEFAULT (datetime('now'))
         );
 
     ''')
     conn.commit()
+
+    # Migrations: add new columns to existing DBs — tried individually so a
+    # "duplicate column" error on one doesn't block the rest.
+    migrations = [
+        "ALTER TABLE vms ADD COLUMN vm_username TEXT DEFAULT ''",
+        "ALTER TABLE vms ADD COLUMN vm_password TEXT DEFAULT ''",
+        "ALTER TABLE vms ADD COLUMN conn_type   TEXT DEFAULT 'ssh'",
+        "ALTER TABLE user_settings ADD COLUMN must_change_password INTEGER DEFAULT 1",
+    ]
+    for sql in migrations:
+        try:
+            conn.execute(sql)
+            conn.commit()
+        except Exception:
+            pass   # column already exists — safe to ignore
+
     conn.close()
     print("[DB] Database initialised.")

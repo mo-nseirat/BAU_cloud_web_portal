@@ -179,6 +179,80 @@ tr:hover td{background:#fafcff;}
 .dot-active{background:var(--success);}.dot-disabled{background:var(--danger);}
 .api-error{padding:10px 13px;background:var(--danger-bg);border-radius:8px;font-size:13px;color:var(--danger);border-left:3px solid var(--danger);margin-bottom:12px;display:none;}
 .api-error i{margin-right:6px;}
+
+/* ── Change-password screen ────────────────────────────────── */
+#change-password-page{
+  display:none;height:100vh;background:var(--light);
+  align-items:center;justify-content:center;
+}
+.cp-card{
+  background:white;border-radius:14px;width:460px;
+  box-shadow:0 8px 32px rgba(0,30,60,.12);overflow:hidden;
+}
+.cp-header{
+  background:var(--primary-dark);padding:28px 32px;
+  display:flex;flex-direction:column;align-items:center;gap:12px;
+}
+.cp-icon{
+  width:56px;height:56px;background:rgba(192,160,96,.18);
+  border:2px solid rgba(192,160,96,.4);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+}
+.cp-icon i{font-size:22px;color:var(--accent);}
+.cp-header h2{font-size:17px;font-weight:600;color:white;margin:0;}
+.cp-header p{font-size:12px;color:rgba(255,255,255,.55);text-align:center;margin:0;}
+.cp-body{padding:28px 32px;}
+.pw-rule{
+  display:flex;align-items:center;gap:7px;
+  font-size:12px;color:var(--text-muted);margin-bottom:6px;
+}
+.pw-rule i{font-size:11px;width:14px;}
+.pw-rule.ok{color:var(--success);}
+.pw-rule.ok i::before{content:'\f00c';}
+
+/* ── VM credentials badge inside table ─────────────────────── */
+.cred-btn{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:3px 9px;border-radius:6px;font-size:11px;font-weight:600;
+  cursor:pointer;border:1.5px solid var(--border);background:white;
+  color:var(--primary);transition:.2s;font-family:'IBM Plex Sans',sans-serif;
+}
+.cred-btn:hover{border-color:var(--accent);color:var(--accent);background:#fffdf5;}
+.cred-btn i{font-size:11px;}
+
+/* Credentials modal details */
+.cred-detail{display:flex;flex-direction:column;gap:12px;}
+.cred-row{
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--light);padding:10px 14px;border-radius:8px;
+  border:1px solid var(--border);
+}
+.cred-label{font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px;}
+.cred-value{
+  font-family:'IBM Plex Mono',monospace;font-size:13px;
+  color:var(--text-dark);font-weight:500;
+  display:flex;align-items:center;gap:8px;
+}
+.cred-value.password-hidden span::before{content:'••••••••••••';}
+.cred-value.password-shown  span{color:var(--primary);}
+.copy-btn{
+  width:26px;height:26px;border:1px solid var(--border);border-radius:5px;
+  background:white;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  color:var(--text-muted);font-size:10px;transition:.2s;
+}
+.copy-btn:hover{border-color:var(--primary);color:var(--primary);}
+.toggle-pw{
+  width:26px;height:26px;border:1px solid var(--border);border-radius:5px;
+  background:white;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  color:var(--text-muted);font-size:10px;transition:.2s;
+}
+.toggle-pw:hover{border-color:var(--accent);color:var(--accent);}
+.cred-note{
+  margin-top:4px;padding:10px 13px;background:var(--warning-bg);
+  border-radius:8px;font-size:12px;color:var(--warning);
+  border-left:3px solid var(--warning);display:flex;align-items:flex-start;gap:8px;
+}
+.cred-note i{flex-shrink:0;margin-top:1px;}
 </style>
 </head>
 <body>
@@ -207,6 +281,36 @@ tr:hover td{background:#fafcff;}
       <div class="api-error" id="login-error"><i class="fas fa-exclamation-circle"></i><span id="login-error-msg"></span></div>
       <button class="btn-login" id="login-btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Sign In to Portal</button>
       <div class="login-notice"><i class="fas fa-info-circle"></i><span>Accounts are managed exclusively by the IT team. Contact IT if you need access.</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- CHANGE PASSWORD PAGE (shown on first login) -->
+<div id="change-password-page">
+  <div class="cp-card">
+    <div class="cp-header">
+      <div class="cp-icon"><i class="fas fa-key"></i></div>
+      <h2>Set Your New Password</h2>
+      <p>For security, you must change your temporary password<br>before accessing the portal.</p>
+    </div>
+    <div class="cp-body">
+      <div class="form-group">
+        <label>New Password</label>
+        <input type="password" id="cp-pass" placeholder="Min. 8 characters" oninput="checkPwRules()">
+      </div>
+      <div style="margin:-8px 0 16px;padding:0 2px;">
+        <div class="pw-rule" id="rule-len"><i class="fas fa-circle"></i>At least 8 characters</div>
+        <div class="pw-rule" id="rule-upper"><i class="fas fa-circle"></i>At least one uppercase letter</div>
+        <div class="pw-rule" id="rule-digit"><i class="fas fa-circle"></i>At least one number</div>
+      </div>
+      <div class="form-group">
+        <label>Confirm New Password</label>
+        <input type="password" id="cp-confirm" placeholder="Repeat new password">
+      </div>
+      <div class="api-error" id="cp-error"><i class="fas fa-exclamation-circle"></i><span id="cp-error-msg"></span></div>
+      <button class="btn-login" id="cp-btn" onclick="submitChangePassword()">
+        <i class="fas fa-lock"></i> Set Password &amp; Continue
+      </button>
     </div>
   </div>
 </div>
@@ -408,6 +512,72 @@ tr:hover td{background:#fafcff;}
   </div>
 </div>
 
+<!-- VM CREDENTIALS MODAL -->
+<div class="modal-overlay" id="creds-modal">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <div>
+        <h3 id="creds-modal-title">VM Login Credentials</h3>
+        <p id="creds-modal-sub">Use these to connect to your VM</p>
+      </div>
+      <button class="modal-close" onclick="closeModal('creds-modal')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="cred-detail">
+        <div class="cred-row">
+          <div>
+            <div class="cred-label">Connection Type</div>
+            <div class="cred-value"><span id="cred-type">SSH</span></div>
+          </div>
+        </div>
+        <div class="cred-row">
+          <div style="flex:1">
+            <div class="cred-label">IP Address</div>
+            <div class="cred-value">
+              <span id="cred-ip">—</span>
+              <button class="copy-btn" onclick="copyText('cred-ip')" title="Copy"><i class="fas fa-copy"></i></button>
+            </div>
+          </div>
+        </div>
+        <div class="cred-row">
+          <div style="flex:1">
+            <div class="cred-label">Username</div>
+            <div class="cred-value">
+              <span id="cred-user">—</span>
+              <button class="copy-btn" onclick="copyText('cred-user')" title="Copy"><i class="fas fa-copy"></i></button>
+            </div>
+          </div>
+        </div>
+        <div class="cred-row">
+          <div style="flex:1">
+            <div class="cred-label">Password</div>
+            <div class="cred-value password-hidden" id="cred-pw-wrap">
+              <span id="cred-pw">—</span>
+              <button class="toggle-pw" onclick="togglePwVisible()" title="Show/Hide"><i class="fas fa-eye" id="cred-pw-eye"></i></button>
+              <button class="copy-btn" onclick="copyText('cred-pw')" title="Copy"><i class="fas fa-copy"></i></button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="cred-note" id="cred-ssh-hint" style="margin-top:14px;">
+        <i class="fas fa-terminal"></i>
+        <span>Connect via SSH: <code id="cred-ssh-cmd" style="font-family:'IBM Plex Mono',monospace;"></code></span>
+      </div>
+      <div class="cred-note" id="cred-rdp-hint" style="margin-top:14px;display:none;">
+        <i class="fas fa-desktop"></i>
+        <span>Open Remote Desktop (mstsc.exe) and connect to the IP address above.</span>
+      </div>
+      <div class="cred-note" style="margin-top:10px;background:var(--danger-bg);border-left-color:var(--danger);color:var(--danger);">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>Save these credentials now — the password is only shown once after provisioning.</span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-outline" onclick="closeModal('creds-modal')">Close</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"><i class="fas fa-check-circle" id="toast-icon"></i><span id="toast-msg"></span></div>
 
 <script>
@@ -445,7 +615,13 @@ async function doLogin() {
   try {
     const res = await api('POST', '/api/login', { username: uid, password: pass });
     currentUser = res.user;
-    bootApp();
+    if (res.must_change_password) {
+      // First login — show change-password screen, block dashboard
+      document.getElementById('login-page').style.display = 'none';
+      document.getElementById('change-password-page').style.display = 'flex';
+    } else {
+      bootApp();
+    }
   } catch (e) {
     showLoginError(e.message);
   } finally {
@@ -457,6 +633,47 @@ async function doLogin() {
 function showLoginError(msg) {
   document.getElementById('login-error-msg').textContent = msg;
   document.getElementById('login-error').style.display = 'block';
+}
+
+/* ── Change Password ──────────────────────────────────────── */
+function checkPwRules() {
+  const pw = document.getElementById('cp-pass').value;
+  const set = (id, ok) => {
+    const el = document.getElementById(id);
+    el.classList.toggle('ok', ok);
+    el.querySelector('i').className = ok ? 'fas fa-check-circle' : 'fas fa-circle';
+  };
+  set('rule-len',   pw.length >= 8);
+  set('rule-upper', /[A-Z]/.test(pw));
+  set('rule-digit', /[0-9]/.test(pw));
+}
+
+async function submitChangePassword() {
+  const newPw  = document.getElementById('cp-pass').value;
+  const confirm = document.getElementById('cp-confirm').value;
+  const errEl  = document.getElementById('cp-error');
+  errEl.style.display = 'none';
+
+  if (newPw.length < 8)      { document.getElementById('cp-error-msg').textContent = 'Password must be at least 8 characters.'; errEl.style.display='block'; return; }
+  if (!/[A-Z]/.test(newPw))  { document.getElementById('cp-error-msg').textContent = 'Password must contain at least one uppercase letter.'; errEl.style.display='block'; return; }
+  if (!/[0-9]/.test(newPw))  { document.getElementById('cp-error-msg').textContent = 'Password must contain at least one number.'; errEl.style.display='block'; return; }
+  if (newPw !== confirm)      { document.getElementById('cp-error-msg').textContent = 'Passwords do not match.'; errEl.style.display='block'; return; }
+
+  const btn = document.getElementById('cp-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+  try {
+    await api('POST', '/api/change-password', { new_password: newPw, confirm_password: confirm });
+    document.getElementById('change-password-page').style.display = 'none';
+    showToast('success', 'Password changed successfully. Welcome!');
+    bootApp();
+  } catch (e) {
+    document.getElementById('cp-error-msg').textContent = e.message;
+    errEl.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-lock"></i> Set Password & Continue';
+  }
 }
 
 async function doLogout() {
@@ -494,9 +711,14 @@ window.addEventListener('DOMContentLoaded', async () => {
   try {
     const res = await api('GET', '/api/me');
     currentUser = res;
-    bootApp();
+    if (res.must_change_password) {
+      document.getElementById('login-page').style.display = 'none';
+      document.getElementById('change-password-page').style.display = 'flex';
+    } else {
+      bootApp();
+    }
   } catch (_) {
-    // Not logged in — show login page (already visible by default)
+    // Not logged in — login page shown by default
   }
 });
 
@@ -515,6 +737,7 @@ async function loadUserVMs() {
   tbody.innerHTML = `<tr class="loading-row"><td colspan="7"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>`;
   try {
     const vms = await api('GET', '/api/vms');
+    _cachedVMs = vms;   // keep a local cache for the credentials modal
     tbody.innerHTML = '';
     if (!vms.length) {
       tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><i class="fas fa-desktop"></i><p>No instances yet. Submit a request to get started.</p></div></td></tr>`;
@@ -542,7 +765,13 @@ function renderUserStats(vms) {
 }
 
 function userVMRow(v) {
-  const dis = v.status === 'building' ? ' disabled' : '';
+  const dis      = v.status === 'building' ? ' disabled' : '';
+  const hasCreds = v.vm_username && v.status !== 'building';
+  const credBtn  = hasCreds
+    ? `<button class="cred-btn" onclick="openCredsModal(${v.proxmox_vmid})" title="View login credentials">
+         <i class="fas fa-key"></i> Credentials
+       </button>`
+    : `<span style="font-size:11px;color:var(--text-muted);">Provisioning...</span>`;
   return `<tr>
     <td><div class="vm-name">${v.name}</div><div class="vm-id">#${v.proxmox_vmid}</div></td>
     <td>${statusBadge(v.status)}</td>
@@ -550,12 +779,17 @@ function userVMRow(v) {
     <td><span class="vlan-badge">VLAN ${v.vlan} · ${v.department}</span></td>
     <td><span class="ip-text">${v.ip_address||'Assigning...'}</span></td>
     <td>${v.vcpu} vCPU / ${v.ram_gb} GB</td>
-    <td><div class="actions">
-      <button class="btn-act b-start" title="Start"${dis} onclick="vmAction(${v.proxmox_vmid},'start')"><i class="fas fa-play"></i></button>
-      <button class="btn-act b-stop"  title="Stop"${dis}  onclick="vmAction(${v.proxmox_vmid},'stop')"><i class="fas fa-stop"></i></button>
-      <button class="btn-act b-con"   title="Console"${dis}><i class="fas fa-terminal"></i></button>
-      <button class="btn-act b-del"   title="Delete"${dis} onclick="vmAction(${v.proxmox_vmid},'delete')"><i class="fas fa-trash"></i></button>
-    </div></td>
+    <td>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        ${credBtn}
+        <div class="actions">
+          <button class="btn-act b-start" title="Start"${dis} onclick="vmAction(${v.proxmox_vmid},'start')"><i class="fas fa-play"></i></button>
+          <button class="btn-act b-stop"  title="Stop"${dis}  onclick="vmAction(${v.proxmox_vmid},'stop')"><i class="fas fa-stop"></i></button>
+          <button class="btn-act b-con"   title="Console"${dis}><i class="fas fa-terminal"></i></button>
+          <button class="btn-act b-del"   title="Delete"${dis} onclick="vmAction(${v.proxmox_vmid},'delete')"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>
+    </td>
   </tr>`;
 }
 
@@ -934,6 +1168,45 @@ function osIcon(os){if(!os)return'💿';if(os.includes('Windows'))return'🪟';i
 function statCard(bg,color,icon,val,label,trend,trendColor){
   return`<div class="stat-card"><div class="stat-icon" style="background:${bg};"><i class="fas ${icon}" style="color:${color};"></i></div><div><div class="stat-label">${label}</div><div class="stat-value" style="color:${color};">${val}</div><div class="stat-trend" style="color:${trendColor||'var(--text-muted)'};">${trend}</div></div></div>`;
 }
+/* ── VM Credentials Modal ─────────────────────────────────── */
+let _cachedVMs = [];   // local cache so modal works without extra API call
+
+async function openCredsModal(vmid) {
+  // Try cache first; if empty, fetch
+  if (!_cachedVMs.length) {
+    try { _cachedVMs = await api('GET', '/api/vms'); } catch(_) {}
+  }
+  const vm = _cachedVMs.find(v => v.proxmox_vmid === vmid);
+  if (!vm) { showToast('danger', 'Could not find VM data.'); return; }
+
+  const isRdp = vm.conn_type === 'rdp';
+  document.getElementById('creds-modal-title').textContent = vm.name + ' — Credentials';
+  document.getElementById('creds-modal-sub').textContent   = isRdp ? 'Use Remote Desktop (RDP) to connect' : 'Use SSH to connect';
+  document.getElementById('cred-type').textContent  = isRdp ? 'RDP (Remote Desktop)' : 'SSH';
+  document.getElementById('cred-ip').textContent    = vm.ip_address || 'Not yet assigned';
+  document.getElementById('cred-user').textContent  = vm.vm_username || '—';
+  document.getElementById('cred-pw').textContent    = vm.vm_password || '—';
+  document.getElementById('cred-pw-wrap').className = 'cred-value password-hidden';
+  document.getElementById('cred-pw-eye').className  = 'fas fa-eye';
+  document.getElementById('cred-ssh-cmd').textContent = `ssh ${vm.vm_username}@${vm.ip_address||'<IP>'}`;
+  document.getElementById('cred-ssh-hint').style.display = isRdp ? 'none' : 'flex';
+  document.getElementById('cred-rdp-hint').style.display = isRdp ? 'flex' : 'none';
+  openModal('creds-modal');
+}
+
+function togglePwVisible() {
+  const wrap = document.getElementById('cred-pw-wrap');
+  const eye  = document.getElementById('cred-pw-eye');
+  const hidden = wrap.classList.contains('password-hidden');
+  wrap.className = 'cred-value ' + (hidden ? 'password-shown' : 'password-hidden');
+  eye.className  = hidden ? 'fas fa-eye-slash' : 'fas fa-eye';
+}
+
+function copyText(elId) {
+  const text = document.getElementById(elId).textContent.trim();
+  navigator.clipboard.writeText(text).then(() => showToast('info', 'Copied to clipboard.'));
+}
+
 document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
 </script>
 </body>
