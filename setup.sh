@@ -44,13 +44,13 @@ slapd slapd/internal/generated_adminpw  password $LDAP_ADMIN_PASS
 slapd slapd/internal/adminpw            password $LDAP_ADMIN_PASS
 slapd slapd/password2                   password $LDAP_ADMIN_PASS
 slapd slapd/password1                   password $LDAP_ADMIN_PASS
-slapd slapd/domain                      string   $LDAP_DOMAIN
-slapd shared/organization               string   $LDAP_ORG
+slapd slapd/domain                      string $LDAP_DOMAIN
+slapd shared/organization               string $LDAP_ORG
 slapd slapd/purge_database              boolean  true
 slapd slapd/move_old_database           boolean  true
 slapd slapd/allow_ldap_v2               boolean  false
 slapd slapd/no_configuration            boolean  false
-slapd slapd/dump_database               select   when needed
+slapd slapd/dump_database select when needed
 EOF
 
 DEBIAN_FRONTEND=noninteractive dpkg-reconfigure slapd
