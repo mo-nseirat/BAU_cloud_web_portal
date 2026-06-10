@@ -1,1 +1,0 @@
-Once you confirm it's working in the browser, we'll start the backend — I'll guide you through setting up Python (Flask), SQLite database schema, and then connecting it to OpenLDAP for real authentication. Ready when you are!
