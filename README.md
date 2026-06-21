@@ -106,6 +106,19 @@ When an admin approves a request, `proxmox_helper.provision_vm()` executes a ful
 
 ---
 
+
+## Monitoring Stack
+
+Infrastructure observability is provided through a dedicated monitoring node on **VLAN 50**:
+
+- **Prometheus** — Scrapes metrics from all VMs via Node Exporter and from Proxmox VE via the REST API
+- **Grafana** — Visualizes infrastructure metrics through a live Proxmox dashboard (Dashboard ID: 10347)
+- **Telegram Alerts** — Real-time alerting via Grafana notification contact points; fires automatically on VM-down or resource threshold breaches
+
+The monitoring node operates in **read-only** mode — it has visibility across all VLANs but zero write access to any resource.
+
+---
+
 ## Tech Stack
 
 | Component | Technology |
