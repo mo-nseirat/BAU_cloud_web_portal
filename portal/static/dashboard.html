@@ -261,15 +261,9 @@ tr:hover td{background:#fafcff;}
 <div id="login-page">
   <div class="login-left">
     <div class="login-brand">
-      <div class="login-logo-ring"><i class="fas fa-cloud"></i></div>
+     <img src="/static/bau-logo.png" style="width:90px;height:90px;object-fit:contain;border-radius:50%;margin-bottom:8px;" alt="BAU">
       <h1>Al-Balqa Applied<br>University — FET</h1>
       <p>Private Cloud Infrastructure</p>
-      <div class="login-features">
-        <div class="login-feature"><i class="fas fa-server"></i><span>Self-service VM provisioning via Proxmox</span></div>
-        <div class="login-feature"><i class="fas fa-network-wired"></i><span>Department-isolated VLANs</span></div>
-        <div class="login-feature"><i class="fas fa-shield-alt"></i><span>Role-based access via OpenLDAP</span></div>
-        <div class="login-feature"><i class="fas fa-check-double"></i><span>IT-approved resource requests</span></div>
-      </div>
     </div>
   </div>
   <div class="login-right">
@@ -328,27 +322,19 @@ tr:hover td{background:#fafcff;}
       <a class="nav-item" onclick="goTo('my-vms','My Instances','Dashboard / My Instances',this)"><i class="fas fa-desktop"></i>My Instances<span class="nav-badge" id="badge-vms" style="display:none"></span></a>
       <a class="nav-item" onclick="goTo('request-resource','Request a VM','Dashboard / Request VM',this)"><i class="fas fa-plus-circle"></i>Request VM</a>
       <a class="nav-item" onclick="goTo('my-requests','My Requests','Dashboard / My Requests',this)"><i class="fas fa-list-check"></i>My Requests<span class="nav-badge red" id="badge-my-pending" style="display:none"></span></a>
-      <div class="nav-section-label">Info</div>
-      <a class="nav-item" onclick="goTo('ph-net','Network','Dashboard / Network',this)"><i class="fas fa-network-wired"></i>Network</a>
-      <a class="nav-item" onclick="goTo('ph-log','Activity Logs','Dashboard / Activity Logs',this)"><i class="fas fa-history"></i>Activity Logs</a>
-    </div>
+    
     <div id="nav-admin" style="display:none">
       <div class="nav-section-label">Administration</div>
       <a class="nav-item" onclick="goTo('admin-requests','Approval Queue','Admin / Pending Requests',this)"><i class="fas fa-inbox"></i>Pending Requests<span class="nav-badge red" id="badge-pending" style="display:none"></span></a>
       <a class="nav-item" onclick="goTo('admin-vms','All Instances','Admin / All Instances',this)"><i class="fas fa-server"></i>All Instances</a>
       <a class="nav-item" onclick="goTo('admin-users','User Management','Admin / User Management',this)"><i class="fas fa-users"></i>User Management</a>
-      <div class="nav-section-label">Monitor</div>
-      <a class="nav-item" onclick="goTo('ph-net','Network','Admin / Network',this)"><i class="fas fa-network-wired"></i>Network</a>
-      <a class="nav-item" onclick="goTo('ph-stats','Usage Stats','Admin / Usage Stats',this)"><i class="fas fa-chart-bar"></i>Usage Stats</a>
-      <a class="nav-item" onclick="goTo('ph-log','All Logs','Admin / Activity Logs',this)"><i class="fas fa-history"></i>Activity Logs</a>
-    </div>
-    <div class="sidebar-footer">Developed by: Student Name<br>Supervised by: Dr. Name<br>Faculty of Engineering Technology · 2025</div>
-  </div>
+     
+      
   <div class="main-content">
     <div class="header">
       <div class="header-left"><div class="page-title" id="header-title">Dashboard</div><div class="breadcrumb" id="header-crumb"></div></div>
       <div class="header-right">
-        <button class="notif-btn"><i class="fas fa-bell"></i><span class="notif-dot" id="notif-dot" style="display:none"></span></button>
+    
         <div class="user-chip"><div class="avatar" id="user-avatar">??</div><span id="user-name">...</span><span class="role-badge" id="user-role-badge">...</span></div>
         <button class="btn-logout" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i>Logout</button>
       </div>
